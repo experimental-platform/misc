@@ -11,6 +11,8 @@ docker build -t experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH .
 
 if [ "${TRAVIS_BRANCH}" == "master" ]; then
   echo -e "\n\nWe're not uploading master anywhere."
+elif [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
+  echo -e "\n\nWe're not uploading images from pull requests."
 else
   docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
   docker push experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH
