@@ -7,15 +7,15 @@ REPONAME=$(echo $TRAVIS_REPO_SLUG | cut -f2 -d '/')
 # e.g. 'dokku'
 SERVICENAME=$(echo $REPONAME | sed 's/^platform-//')
 
-docker build -t experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH .
+docker build -t "quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH" .
 
 if [ "${TRAVIS_BRANCH}" == "master" ]; then
   echo -e "\n\nWe're not uploading master anywhere."
 elif [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
   echo -e "\n\nWe're not uploading images from pull requests."
 else
-  docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-  docker push experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH
+  docker login -e 'none' -u "$QUAY_USER" -p "$QUAY_PASS" quay.io
+  docker push "quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
   if [ "$TRAVIS_BRANCH" != "development" ]; then
     BODY="{ \"request\": {
       \"message\": \"Triggered by '$TRAVIS_REPO_SLUG'\",
