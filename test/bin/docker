@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+path = File.join ENV['DUMP_PATH'], "docker.dump"
+File.open(path, 'w') { |file| file << Marshal.dump(ARGV) }
