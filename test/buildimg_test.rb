@@ -9,41 +9,17 @@ require 'minitest/reporters'
 
 ROOT = File.expand_path '../..', __FILE__
 
-def load_env(path, base = {})
-  unless File.exist? path
-    # see .env.sample
-    raise "Could not load #{ path }, file does not exist."
-  end
-
-  env = {}
-  File.open(path) do |file|
-    until file.eof?
-      env.send '[]=', *file.gets.split('=').map(&:chomp)
-    end
-  end
-
+env = ENV.to_hash.update(
+  # prevent real scripts from being called
+  'PATH' => "#{ File.expand_path '../bin', __FILE__ }:#{ ENV['PATH'] }",
   # prevent image from being pushed
-  env['TRAVIS_PULL_REQUEST'] = 'TRUE'
+  'TRAVIS_PULL_REQUEST' => '..o__o..',
   # fake a Travis repository slug
-  env['TRAVIS_REPO_SLUG']    = "test/#{ env['GITHUB_REPO'][/\/(.+)$/, 1] }"
-  # prevent real docker from being called
-  env['PATH']                = "#{ File.expand_path '../bin', __FILE__ }:#{ base['PATH'] }"
-
-  return base.merge(env)
-end
-
-env  = load_env File.join(ROOT, %w[ test .env ]), ENV.to_hash
-
-REPO = Dir.mktmpdir
-MiniTest.after_run { FileUtils.remove_entry REPO }
-
-GITHUB_REPO = env.fetch 'GITHUB_REPO'
-GITHUB_URL  = "git@github.com:#{ GITHUB_REPO }.git"
-
-puts "Caching repository #{ GITHUB_URL }..."
-system 'git', 'clone', '--recursive', '--quiet', GITHUB_URL, REPO
-
-NAME = GITHUB_REPO[/\/(.+)$/, 1]
+  'TRAVIS_REPO_SLUG' => 'test/platform-mysql',
+  # fake the propagated branch
+  'TRAVIS_BRANCH' => 'development'
+)
+SERVICENAME = env['TRAVIS_REPO_SLUG'][/test\/(.+)/, 1].sub 'platform-', ''
 
 describe 'buildimg.sh' do
 
@@ -59,15 +35,14 @@ describe 'buildimg.sh' do
   end
 
   before do
-    @tmpdir = Dir.mktmpdir "#{ NAME }-"
+    @tmpdir = Dir.mktmpdir "#{ SERVICENAME }-"
     env['DUMP_PATH'] = @tmpdir
-    FileUtils.cp_r Dir["#{ REPO }/*"], @tmpdir
   end
   after do
     FileUtils.remove_entry @tmpdir
   end
 
-  it "should call test-image with TAGNAME" do
+  it "should call test-image with REPONAME and TAGNAME" do
     Dir.chdir @tmpdir do
       target = File.join env['PATH'].split(':', 2).first, 'dump'
       dest   = File.join @tmpdir, 'test-image'
@@ -79,7 +54,7 @@ describe 'buildimg.sh' do
       argv = File.open(dump_path) { |f| Marshal.load f }
 
       argv.must_equal ['quay.io/experimentalplatform/%s:%s' % [
-        env['GITHUB_REPO'][/\/(.+)$/, 1],
+        SERVICENAME,
         env['TRAVIS_BRANCH']
       ] ]
     end
@@ -88,7 +63,7 @@ describe 'buildimg.sh' do
   it 'aborts if test-image exists but is not executable' do
     Dir.chdir @tmpdir do
       File.open('test-image', 'w') { |f| f << 'exit 0' }
-      buildimg(env).must_equal false
+      buildimg(env).must_be_same_as false
     end
   end
   it 'aborts if test-image returns != 0' do
@@ -98,7 +73,7 @@ describe 'buildimg.sh' do
         FileUtils.chmod 0755, file.path
       end
 
-      buildimg(env).must_equal false
+      buildimg(env).must_be_same_as false
     end
   end
 
@@ -106,7 +81,7 @@ describe 'buildimg.sh' do
     Dir.chdir @tmpdir do
       buildimg(env).must_be_same_as true
 
-      docker_repository = "quay.io/experimentalplatform/#{ NAME }"
+      docker_repository = "quay.io/experimentalplatform/#{ SERVICENAME }"
       docker_tag        = env['TRAVIS_BRANCH']
       docker_path       = "#{ docker_repository }:#{ docker_tag }"
 
