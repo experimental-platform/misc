@@ -4,10 +4,19 @@ set -eu
 
 # e.g. 'platform-dokku'
 REPONAME=$(echo $TRAVIS_REPO_SLUG | cut -f2 -d '/')
+OWNERNAME=$(echo $TRAVIS_REPO_SLUG | cut -f1 -d '/')
 # e.g. 'dokku'
 SERVICENAME=$(echo $REPONAME | sed 's/^platform-//')
+TAGNAME=
 
-TAGNAME="quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
+if [ "$OWNERNAME" == 'experimental-platform' ]; then
+  TAGNAME="quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
+elif [ "$OWNERNAME" == 'protonet' ]; then
+  TAGNAME="quay.io/protonetinc/$SERVICENAME:$TRAVIS_BRANCH"
+else
+  echo "unknown owner org '$OWNERNAME'"
+  exit 1
+fi
 
 docker build -t "${TAGNAME}" .
 
