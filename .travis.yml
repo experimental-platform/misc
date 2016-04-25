@@ -1,4 +1,4 @@
-sudo: required
+sudo: false
 rvm:
   - 2.2
 script:
