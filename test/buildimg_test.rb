@@ -66,6 +66,7 @@ describe 'buildimg.sh' do
       buildimg(env).must_be_same_as false
     end
   end
+
   it 'aborts if test-image returns != 0' do
     Dir.chdir @tmpdir do
       File.open 'test-image', 'w' do |file|
