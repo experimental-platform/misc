@@ -7,7 +7,18 @@ REPONAME=$(echo $TRAVIS_REPO_SLUG | cut -f2 -d '/')
 # e.g. 'dokku'
 SERVICENAME=$(echo $REPONAME | sed 's/^platform-//')
 
-docker build -t "quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH" .
+TAGNAME="quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
+
+docker build -t "${TAGNAME}" .
+
+if [ -e "test-image" ]; then
+  if [ -x "test-image" ]; then
+    ./test-image "${TAGNAME}" || exit 1
+  else
+    echo "Found a test-image script, but it's not executable."
+    exit 1
+  fi
+fi
 
 if [ "${TRAVIS_BRANCH}" == "master" ]; then
   echo -e "\n\nWe're not uploading master anywhere."

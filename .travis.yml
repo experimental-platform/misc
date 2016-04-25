@@ -1,0 +1,6 @@
+sudo: false
+before_script: gem install --no-ri --no-rdoc minitest-reporters
+rvm:
+  - 2.2
+script:
+  - test/buildimg_test.rb

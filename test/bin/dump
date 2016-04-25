@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+basename = "#{ File.basename __FILE__, '*' }.dump"
+path = File.join ENV['DUMP_PATH'], basename
+
+File.open(path, 'w') { |file| file << Marshal.dump(ARGV) }
