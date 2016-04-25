@@ -5,7 +5,7 @@ require 'tempfile'
 
 require 'minitest'
 require 'minitest/autorun'
-require 'minitest/reporters' rescue nil
+require 'minitest/reporters'
 
 ROOT = File.expand_path '../..', __FILE__
 
