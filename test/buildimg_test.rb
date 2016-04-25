@@ -67,6 +67,24 @@ describe 'buildimg.sh' do
     FileUtils.remove_entry @tmpdir
   end
 
+  it "should call test-image with TAGNAME" do
+    Dir.chdir @tmpdir do
+      target = File.join env['PATH'].split(':', 2).first, 'dump'
+      dest   = File.join @tmpdir, 'test-image'
+      FileUtils.symlink target, dest
+
+      buildimg env
+
+      dump_path = File.join @tmpdir, 'test-image.dump'
+      argv = File.open(dump_path) { |f| Marshal.load f }
+
+      argv.must_equal ['quay.io/experimentalplatform/%s:%s' % [
+        env['GITHUB_REPO'][/\/(.+)$/, 1],
+        env['TRAVIS_BRANCH']
+      ] ]
+    end
+  end
+
   it 'aborts if test-image exists but is not executable' do
     Dir.chdir @tmpdir do
       File.open('test-image', 'w') { |f| f << 'exit 0' }
