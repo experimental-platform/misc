@@ -28,6 +28,11 @@ experimentalplatform/frontend
 experimentalplatform/monitoring
 experimentalplatform/configure
 
+experimentalplatform/mysql
+experimentalplatform/elasticsearch
+experimentalplatform/redis
+experimentalplatform/rabbitmq
+
 protonetinc/german-shepherd
 protonetinc/soul-backup
 protonetinc/soul-nginx
