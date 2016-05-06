@@ -16,7 +16,7 @@ function putS3
   object_name="$2"
   string="PUT\n\n\n$date\n$acl\n/$BUCKET$aws_path$object_name"
   signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
-  curl -i -X PUT -T "$path" --fail \
+  curl -X PUT -T "$path" --fail \
     -H "Host: $BUCKET.s3.amazonaws.com" \
     -H "Date: $date" \
     -H "$acl" \
@@ -35,7 +35,7 @@ deleteS3() {
     -H "Date: $date" \
     -H "Authorization: AWS ${S3KEY}:$signature" \
     "https://$BUCKET.s3.amazonaws.com$aws_path$object_name"
-  echo "curl -i -X DELETE -H Host: $BUCKET.s3.amazonaws.com -H Date: $date -H Authorization: AWS ${S3KEY}:$signature https://$BUCKET.s3.amazonaws.com$aws_path$object_name"
+  echo "curl -X DELETE -H Host: $BUCKET.s3.amazonaws.com -H Date: $date -H Authorization: AWS ${S3KEY}:$signature https://$BUCKET.s3.amazonaws.com$aws_path$object_name"
 }
 
 function copyS3() {
@@ -45,7 +45,7 @@ function copyS3() {
   dst="$2"
   string="PUT\n\n\n$date\n$acl\nx-amz-copy-source:/$BUCKET/$src\n/$BUCKET/$dst"
   signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
-  curl -i -X PUT --fail \
+  curl -X PUT --fail \
     -H "Host: $BUCKET.s3.amazonaws.com" \
     -H "Date: $date" \
     -H "$acl" \
