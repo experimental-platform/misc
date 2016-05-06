@@ -40,13 +40,15 @@ deleteS3() {
 
 function copyS3() {
   date=$(date +"%a, %d %b %Y %T %z")
+  acl="x-amz-acl:public-read"
   src="$1"
   dst="$2"
-  string="PUT\n\n\n$date\nx-amz-copy-source:/$BUCKET/$src\n/$BUCKET/$dst"
+  string="PUT\n\n\n$date\n$acl\nx-amz-copy-source:/$BUCKET/$src\n/$BUCKET/$dst"
   signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
   curl -X PUT --fail \
     -H "Host: $BUCKET.s3.amazonaws.com" \
     -H "Date: $date" \
+    -H "$acl" \
     -H "x-amz-copy-source: /$BUCKET/$src" \
     -H "Authorization: AWS ${S3KEY}:$signature" \
     "https://$BUCKET.s3.amazonaws.com/$dst"
