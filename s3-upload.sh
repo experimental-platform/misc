@@ -38,12 +38,29 @@ deleteS3() {
   echo "curl -i -X DELETE -H Host: $BUCKET.s3.amazonaws.com -H Date: $date -H Authorization: AWS ${S3KEY}:$signature https://$BUCKET.s3.amazonaws.com$aws_path$object_name"
 }
 
+function copyS3() {
+  date=$(date +"%a, %d %b %Y %T %z")
+  src="$1"
+  dst="$2"
+  string="PUT\n\n\n$date\nx-amz-copy-source:/$BUCKET/$src\n/$BUCKET/$dst"
+  signature=$(echo -en "${string}" | openssl sha1 -hmac "${S3SECRET}" -binary | base64)
+  curl -X PUT --fail \
+    -H "Host: $BUCKET.s3.amazonaws.com" \
+    -H "Date: $date" \
+    -H "x-amz-copy-source: /$BUCKET/$src" \
+    -H "Authorization: AWS ${S3KEY}:$signature" \
+    "https://$BUCKET.s3.amazonaws.com/$dst"
+}
+
 case $1 in
   put)
     putS3 $2 $3
     ;;
   delete)
     deleteS3 $2
+    ;;
+  copy)
+    copyS3 $2 $3
     ;;
   *)
     echo "Unknown command '$1'"
