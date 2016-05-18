@@ -98,7 +98,7 @@ get_shepherd_build_number() {
 }
 
 print_usage() {
-	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--sure]"
+	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--source-tag tag] [--target-tag tag] [--sure]"
 	echo "Flags:"
 	echo -e "\t -h|--help\t Show this help text."
 	echo -e "\t -b|--build\t Manually specify the build number to be placed inside the JSON."
