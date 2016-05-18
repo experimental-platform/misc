@@ -13,6 +13,7 @@ DEFAULT_TARGET_TAG="soul3"
 TARGET_TAG="$DEFAULT_TARGET_TAG"
 JSON_BRANCH="master"
 SURE="false"
+RELEASE_NOTES_URL=""
 
 IMAGES="
 experimentalplatform/skvs
@@ -98,13 +99,14 @@ get_shepherd_build_number() {
 }
 
 print_usage() {
-	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--source-tag tag] [--target-tag tag] [--sure]"
+	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--source-tag tag] [--target-tag tag] -u|--url url [--sure]"
 	echo "Flags:"
 	echo -e "\t -h|--help\t Show this help text."
 	echo -e "\t -b|--build\t Manually specify the build number to be placed inside the JSON."
 	echo -e "\t --sure\t\t Commit the changes. Will make a dry run without this flag."
 	echo -e "\t --source-tag\t Registry tag to be retagging from (default: $DEFAULT_SOURCE_TAG)"
 	echo -e "\t --target-tag\t Registry tag to be retagging to (default: $DEFAULT_TARGET_TAG)"
+	echo -e "\t -u|--url\t Release notes URL"
 }
 
 update_json() {
@@ -131,7 +133,7 @@ update_json() {
 	echo "Old build version: $BUILDNUM"
 	echo "New build version: $NEWBUILDNUM"
 
-	JQCMD="(.[0].build = $NEWBUILDNUM) | (.[0].published_at = \"$ISOTIMESTAMP\")"
+	JQCMD="(.[0].build = $NEWBUILDNUM) | (.[0].published_at = \"$ISOTIMESTAMP\") | (.[0].url = \"$RELEASE_NOTES_URL\")"
 	JSON="$(echo "${JSON}" | jq "$JQCMD")"
 	echo "$JSON" > "$JSONFILE"
 	git -C "$CLONEDIR" add "$TARGET_TAG.json"
@@ -165,6 +167,10 @@ while [[ $# > 0 ]]; do
 			print_usage
 			exit 0
 		;;
+		-u|--url)
+			RELEASE_NOTES_URL="$2"
+			shift
+		;;
 		*)
 			echo "Unknown option '$1'"
 			print_usage
@@ -174,6 +180,11 @@ while [[ $# > 0 ]]; do
 
 	shift
 done
+
+if [ -z "$RELEASE_NOTES_URL" ]; then
+	echo "You must specify the release notes URL!"
+	exit 1
+fi
 
 echo "Tag timestamp: $TIMESTAMP"
 echo "ISO timestamp: $ISOTIMESTAMP"
