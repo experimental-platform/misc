@@ -12,7 +12,7 @@ SOURCE_TAG="$DEFAULT_SOURCE_TAG"
 DEFAULT_TARGET_TAG="soul3"
 TARGET_TAG="$DEFAULT_TARGET_TAG"
 JSON_BRANCH="master"
-SURE="false"
+COMMIT="false"
 RELEASE_NOTES_URL=""
 
 IMAGES="
@@ -99,11 +99,11 @@ get_shepherd_build_number() {
 }
 
 print_usage() {
-	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--source-tag tag] [--target-tag tag] -u|--url url [--sure]"
+	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--source-tag tag] [--target-tag tag] -u|--url url [--commit]"
 	echo "Flags:"
 	echo -e "\t -h|--help\t Show this help text."
 	echo -e "\t -b|--build\t Manually specify the build number to be placed inside the JSON."
-	echo -e "\t --sure\t\t Commit the changes. Will make a dry run without this flag."
+	echo -e "\t --commit\t\t Commit the changes. Will make a dry run without this flag."
 	echo -e "\t --source-tag\t Registry tag to be retagging from (default: $DEFAULT_SOURCE_TAG)"
 	echo -e "\t --target-tag\t Registry tag to be retagging to (default: $DEFAULT_TARGET_TAG)"
 	echo -e "\t -u|--url\t Release notes URL"
@@ -139,7 +139,7 @@ update_json() {
 	git -C "$CLONEDIR" add "$TARGET_TAG.json"
 	git -C "$CLONEDIR" commit -m "release at $ISOTIMESTAMP"
 
-	if [[ $SURE == "true" ]]; then
+	if [[ $COMMIT == "true" ]]; then
 	        git -C "$CLONEDIR" push
 	else
 	        echo -e "New JSON:\n$JSON"
@@ -148,8 +148,8 @@ update_json() {
 
 while [[ $# > 0 ]]; do
 	case $1 in
-		--sure)
-			SURE="true"
+		--commit)
+			COMMIT="true"
 			;;
 		-b|--build)
 			NEWBUILDNUM="$2"
@@ -189,7 +189,7 @@ fi
 echo "Tag timestamp: $TIMESTAMP"
 echo "ISO timestamp: $ISOTIMESTAMP"
 
-if [ $SURE == "true" ]; then
+if [ $COMMIT == "true" ]; then
 	retag_all "$SOURCE_TAG" "$TIMESTAMP"
 	retag_all "$TIMESTAMP" "$TARGET_TAG"
 else
