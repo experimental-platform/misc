@@ -27,23 +27,4 @@ elif [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
 else
   docker login -e 'none' -u "$QUAY_USER" -p "$QUAY_PASS" quay.io
   docker push "quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
-  if [ "$TRAVIS_BRANCH" != "development" ]; then
-    BODY="{ \"request\": {
-      \"message\": \"Triggered by '$TRAVIS_REPO_SLUG'\",
-        \"config\": {
-        \"env\": {
-          \"SERVICE_TAG\": \"$TRAVIS_BRANCH\",
-          \"SERVICE_NAME\": \"$SERVICENAME\"
-    }}}}"
-    URL="https://api.travis-ci.org/repo/experimental-platform%2Fplatform-configure/requests"
-    echo "URL: $URL"
-    echo "BODY: $BODY"
-    curl -f -s -X POST \
-      -H "Content-Type: application/json" \
-      -H "Accept: application/json" \
-      -H "Travis-API-Version: 3" \
-      -H "Authorization: token $TRAVIS_TOKEN" \
-      -d "$BODY" \
-      $URL
-  fi
 fi
