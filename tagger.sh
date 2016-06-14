@@ -133,7 +133,7 @@ update_json() {
 	echo "Old build version: $BUILDNUM"
 	echo "New build version: $NEWBUILDNUM"
 
-	JQCMD="(.[0].build = $NEWBUILDNUM) | (.[0].published_at = \"$ISOTIMESTAMP\") | (.[0].url = \"$RELEASE_NOTES_URL\")"
+	JQCMD="(.[0].build = $NEWBUILDNUM) | (.[0].published_at = \"$ISOTIMESTAMP\") | (.[0].url = \"$RELEASE_NOTES_URL\") | (.[0].images = (.[0].images | keys | map({(.):\"$TIMESTAMP\"}) | add))"
 	JSON="$(echo "${JSON}" | jq "$JQCMD")"
 	echo "$JSON" > "$JSONFILE"
 	git -C "$CLONEDIR" add "$TARGET_TAG.json"
