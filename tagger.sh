@@ -15,38 +15,21 @@ JSON_BRANCH="master"
 COMMIT="false"
 RELEASE_NOTES_URL=""
 
-IMAGES="
-experimentalplatform/skvs
-experimentalplatform/ptw
-experimentalplatform/afpd
-experimentalplatform/http-proxy
-experimentalplatform/hostname-avahi
-experimentalplatform/hardware
-experimentalplatform/systemd-proxy
-experimentalplatform/smb
-experimentalplatform/pulseaudio
-experimentalplatform/haproxy
-experimentalplatform/hostname-smb
-experimentalplatform/hostapd
-experimentalplatform/app-manager
-experimentalplatform/central-gateway
-experimentalplatform/dnsmasq
-experimentalplatform/dokku
-experimentalplatform/frontend
-experimentalplatform/monitoring
-experimentalplatform/configure
+load_image_list() {
+	local URL="https://raw.githubusercontent.com/protonet/builds/master/${SOURCE_TAG}.json"
+	IMAGESJSON="$(curl --fail --silent "$URL" | jq ".[0].images | keys | map({(.):\"$TIMESTAMP\"}) | add")"
+	IMAGES="$(echo "$IMAGESJSON" | jq 'keys[]' --raw-output | sed 's:^quay.io/::')"
+}
 
-experimentalplatform/mysql
-experimentalplatform/elasticsearch
-experimentalplatform/redis
-experimentalplatform/rabbitmq
+prepare_repo() {
+	CLONEDIR=$(mktemp -d)
+	trap "rm -rf '$CLONEDIR'" SIGINT SIGTERM EXIT
 
-protonetinc/german-shepherd
-protonetinc/soul-backup
-protonetinc/soul-nginx
-protonetinc/soul-protosync
-protonetinc/soul-smb
-"
+	git clone -q 'git@github.com:protonet/builds.git' "$CLONEDIR"
+	git -C "$CLONEDIR" checkout "$JSON_BRANCH" &>/dev/null
+
+	JSONFILE="$CLONEDIR/$TARGET_TAG.json"
+}
 
 retag_image() {
   local IMAGE ID OLD_TAG NEW_TAG
@@ -94,10 +77,6 @@ retag_all() {
 	done
 }
 
-get_shepherd_build_number() {
-	docker run -it --rm "quay.io/protonetinc/german-shepherd:$SOURCE_TAG" cat /soul/source/BUILD_NUMBER
-}
-
 print_usage() {
 	echo "Usage: $0 [-h|--help] [-b|--build buildnumber] [--source-tag tag] [--target-tag tag] -u|--url url [--commit]"
 	echo "Flags:"
@@ -110,14 +89,8 @@ print_usage() {
 }
 
 update_json() {
-	local CLONEDIR JSON BUILDNUM
+	local JSON BUILDNUM
 
-	CLONEDIR=$(mktemp -d)
-	trap "rm -rf '$CLONEDIR'" SIGINT SIGTERM EXIT
-	git clone -q 'git@github.com:protonet/builds.git' "$CLONEDIR"
-	git -C "$CLONEDIR" checkout "$JSON_BRANCH" &>/dev/null
-
-	JSONFILE="$CLONEDIR/$TARGET_TAG.json"
 	JSON="$(< "$JSONFILE")"
 	BUILDNUM=$(echo "$JSON" | jq '.[0].build')
 	if [ -z "$NEWBUILDNUM" ]; then
@@ -133,8 +106,8 @@ update_json() {
 	echo "Old build version: $BUILDNUM"
 	echo "New build version: $NEWBUILDNUM"
 
-	JQCMD="(.[0].build = $NEWBUILDNUM) | (.[0].published_at = \"$ISOTIMESTAMP\") | (.[0].url = \"$RELEASE_NOTES_URL\") | (.[0].images = (.[0].images | keys | map({(.):\"$TIMESTAMP\"}) | add))"
-	JSON="$(echo "${JSON}" | jq "$JQCMD")"
+	JQCMD="(.[0].build = $NEWBUILDNUM) | (.[0].published_at = \"$ISOTIMESTAMP\") | (.[0].url = \"$RELEASE_NOTES_URL\") | (.[0].images = \$images)"
+	JSON="$(jq --argjson images "$IMAGESJSON" "$JQCMD" <<< "${JSON}")"
 	echo "$JSON" > "$JSONFILE"
 	git -C "$CLONEDIR" add "$TARGET_TAG.json"
 	git -C "$CLONEDIR" commit -m "release at $ISOTIMESTAMP"
@@ -189,11 +162,15 @@ fi
 echo "Tag timestamp: $TIMESTAMP"
 echo "ISO timestamp: $ISOTIMESTAMP"
 
+prepare_repo
+load_image_list
+
 if [ $COMMIT == "true" ]; then
 	retag_all "$SOURCE_TAG" "$TIMESTAMP"
 	retag_all "$TIMESTAMP" "$TARGET_TAG"
 else
-	echo "Dry run. Would otherwise retag '$SOURCE_TAG' to '$TIMESTAMP' and '$TARGET_TAG'"
+	echo "Dry run. Would otherwise retag following images from '$SOURCE_TAG' to '$TIMESTAMP' and '$TARGET_TAG':"
+  echo "$IMAGES" | sed 's/^/ * /'
 fi
 
 update_json
