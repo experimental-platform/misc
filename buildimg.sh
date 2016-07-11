@@ -26,5 +26,5 @@ elif [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
   echo -e "\n\nWe're not uploading images from pull requests."
 else
   docker login -e 'none' -u "$QUAY_USER" -p "$QUAY_PASS" quay.io
-  docker push "quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
+  docker push "$TAGNAME"
 fi
