@@ -7,7 +7,10 @@ REPONAME=$(echo $TRAVIS_REPO_SLUG | cut -f2 -d '/')
 # e.g. 'dokku'
 SERVICENAME=$(echo $REPONAME | sed 's/^platform-//')
 
-TAGNAME="quay.io/experimentalplatform/$SERVICENAME:$TRAVIS_BRANCH"
+# Allow to set custom quay.io organization from ENV
+QUAY_ORG=${QUAY_ORG:-experimentalplatform}
+
+TAGNAME="quay.io/$QUAY_ORG/$SERVICENAME:$TRAVIS_BRANCH"
 
 docker build -t "${TAGNAME}" .
 
