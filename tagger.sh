@@ -73,7 +73,9 @@ retag_all() {
 	NEW_TAG="$2"
 
 	for image in $IMAGES; do
+	  echo -en "Tagging \"${image}:${OLD_TAG}\" with \"${NEW_TAG}\"... "
 		retag_image "$image" "$OLD_TAG" "$NEW_TAG"
+		echo "."# primarily add a newline
 	done
 }
 
