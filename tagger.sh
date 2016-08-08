@@ -54,17 +54,38 @@ get_tag_image() {
   local NAME TAG
   NAME="$1"
   TAG="$2"
-  OUT="$(curl --silent "https://quay.io/api/v1/repository/$NAME/tag/" -H "Authorization: Bearer $TOKEN" | jq --arg tag "$TAG" '.tags[] | select(.name == $tag) | select(.end_ts == null) | .docker_image_id' --raw-output)"
+  OUT="$(curl --fail --silent "https://quay.io/api/v1/repository/$NAME/tag/" -H "Authorization: Bearer $TOKEN" | jq --arg tag "$TAG" '.tags[] | select(.name == $tag) | select(.end_ts == null) | .docker_image_id' --raw-output)"
   echo "$OUT"
 }
 
+
+run_curl() {
+    local TMP_STDERR TMP_STDOUT CURL_ARGS
+    CURL_ARGS="$@"
+    TMP_STDERR=$(mktemp)
+    TMP_STDOUT=$(mktemp)
+    if curl --fail ${CURL_ARGS} > ${TMP_STDOUT} 2> ${TMP_STDERR}; then
+        rm -f ${TMP_STDERR} ${TMP_STDOUT}
+        return 0
+    else
+        cat ${TMP_STDERR}
+        cat ${TMP_STDOUT}
+        rm -f ${TMP_STDERR} ${TMP_STDOUT}
+        return 23
+    fi
+}
+
+
 set_tag_image() {
-  local NAME TAG ID
+  local NAME TAG ID CURL_ARGS
   NAME="$1"
   TAG="$2"
   ID="$3"
+  CURL_ARGS="-X PUT \"https://quay.io/api/v1/repository/$NAME/tag/$TAG\""
+  CURL_ARGS=${CURL_ARGS}"-H 'Content-Type: application/json' -H \"Authorization: Bearer $TOKEN\""
+  CURL_ARGS=${CURL_ARGS}"-d \"$(jq -n --arg id \"$ID\" '{"image": $id}' )\""
+  run_curl ${CURL_ARGS}
 
-  curl --silent -X PUT "https://quay.io/api/v1/repository/$NAME/tag/$TAG" -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d "$(jq -n --arg id "$ID" '{"image": $id}' )"
 }
 
 retag_all() {
@@ -75,7 +96,7 @@ retag_all() {
 	for image in $IMAGES; do
 	  echo -en "Tagging \"${image}:${OLD_TAG}\" with \"${NEW_TAG}\"... "
 		retag_image "$image" "$OLD_TAG" "$NEW_TAG"
-		echo "."# primarily add a newline
+		echo "."
 	done
 }
 
