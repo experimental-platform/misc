@@ -1,3 +1,3 @@
 # About These Scripts
 
-Various build utilities. mainly ask @kdomanski
+Various build utilities. Check the docs repo and mainly ask @kdomanski
