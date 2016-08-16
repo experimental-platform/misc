@@ -5,11 +5,13 @@ set -eux
 TMPFILE=$(mktemp)
 TMPDIR=$(mktemp -d)
 
-URL="https://github.com/Masterminds/glide/releases/download/0.6.1/glide-linux-amd64.zip"
+GLIDE_VERSION="v0.11.1"
 
 if [ $# -eq 1 ]; then
-  URL="https://github.com/Masterminds/glide/releases/download/$1/glide-$1-linux-amd64.zip"
+  GLIDE_VERSION="$1"
 fi
+
+URL="https://github.com/Masterminds/glide/releases/download/$GLIDE_VERSION/glide-$GLIDE_VERSION-linux-amd64.zip"
 
 curl -L "$URL" > "$TMPFILE"
 unzip "$TMPFILE" -d "$TMPDIR"
