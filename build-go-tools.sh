@@ -2,6 +2,7 @@
 
 set -eu
 set -o pipefail
+set -x
 
 export GO15VENDOREXPERIMENT=1
 BASEPATH=${BASEPATH:-go}
