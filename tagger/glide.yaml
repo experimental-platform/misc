@@ -1,0 +1,5 @@
+package: .
+import:
+- package: github.com/jessevdk/go-flags
+  version: ~1.0.0
+- package: gopkg.in/libgit2/git2go.v24
