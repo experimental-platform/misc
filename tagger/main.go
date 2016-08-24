@@ -82,7 +82,7 @@ func updateJSON(dir, releaseNotesURL, tagTimestamp, isoTimestamp, targetChannel 
 
 func main() {
 	var opts struct {
-		Commit    bool   `short:"c" long:"commit" default:"false" description:"Commit the changes. Will make a dry run without this flag."`
+		Commit    bool   `short:"c" long:"commit" description:"Commit the changes. Will make a dry run without this flag."`
 		Build     int32  `short:"b" long:"build" required:"true" description:"Specify the build number to be placed inside the JSON."`
 		SourceTag string `short:"s" long:"source-tag" default:"development" description:"Registry tag to be retagging from."`
 		TargetTag string `short:"t" long:"target-tag" default:"soul3" description:"Registry tag to be retagging to."`
