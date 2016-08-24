@@ -1,11 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
-	"os/user"
 	"time"
 
 	"gopkg.in/libgit2/git2go.v24"
@@ -22,16 +20,7 @@ type buildsDatum struct {
 type buildsData []buildsDatum
 
 func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
-	usr, err := user.Current()
-	if err != nil {
-		log.Printf("Failed to obtain user directory path.")
-		return git.ErrUser, nil
-	}
-
-	publicKeyPath := fmt.Sprintf("%s/.ssh/id_rsa.pub", usr.HomeDir)
-	privateKeyPath := fmt.Sprintf("%s/.ssh/id_rsa", usr.HomeDir)
-
-	ret, cred := git.NewCredSshKey("git", publicKeyPath, privateKeyPath, "")
+	ret, cred := git.NewCredSshKeyFromAgent("git")
 	return git.ErrorCode(ret), &cred
 }
 
