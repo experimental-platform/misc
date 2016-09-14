@@ -1,12 +1,43 @@
-sudo: false
-services:
-  - docker
-before_script: gem install --no-ri --no-rdoc minitest-reporters
-rvm:
-  - 2.2
+language: go
+matrix:
+  include:
+  - os: linux
+    dist: xenial
+    sudo: required
+    go: 1.6
+  - os: osx
+    go: 1.6
 install:
-  - 'docker build -t tagger-builder -f tagger/tagger-builder.Dockerfile .'
-  - 'docker -it --rm -w /go/src/tagger -v $(pwd)/tagger:/go/src/tagger tagger-builder "glide install && go build -v"'
+- |
+  if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    sudo apt-get update
+    sudo apt-get install -y -q --no-install-recommends libhttp-parser-dev libssh2-1-dev
+    wget https://launchpad.net/ubuntu/+archive/primary/+files/libgit2-24_0.24.1-2_amd64.deb
+    wget https://launchpad.net/ubuntu/+archive/primary/+files/libgit2-dev_0.24.1-2_amd64.deb
+    sudo dpkg -i libgit2-24_0.24.1-2_amd64.deb libgit2-dev_0.24.1-2_amd64.deb
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]];   then brew update && brew install libgit2;
+  fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then echo "$BUILD_READ_KEY" | base64 -d >
+  read_key; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then echo "$BUILD_READ_KEY" | base64 -D > read_key;
+  fi
+- chmod 600 read_key
+- eval "$(ssh-agent -s)"
+- echo | ssh-add read_key
+- go get github.com/Masterminds/glide
+- go install github.com/Masterminds/glide
+- cd tagger
+- glide install
+- go build -v -o tagger-$TRAVIS_OS_NAME
 script:
-  - 'docker -it --rm -w /go/src/tagger -v $(pwd)/tagger:/go/src/tagger tagger-builder "go test -v"'
-  - test/buildimg_test.rb
+- go test -v
+deploy:
+  provider: releases
+  api_key:
+    secure: WVP4riZsnjK0XXpw9EKjyA/yOU2DBEO0NfSiL0JV2vnHLeClLjEGoIzBMTUA63E31SJPnIYuTKJN45b8VUD2mj5viWs43UTVXzuwoLyMwGf+lUXRUNIyFQa7LO/De5HQ/TS96gmSs1D+ElASEIy0aZoo/F9q8AqJIe2XspK/SDHa3dneU9+sV9JJ4rp4iwaPR5uXbNXA2hoQtKlOTzwqtt4PfSiAVM7NN2tN1BiSF7n1aNI3EU/MWJFNbFGtDtDKST/iJlfjaMwLaiIXhL9luqPP6oRTygucFMsfjBdXDsT2tYNmnmx069tBjPVasInYoi7CMZeswRTXzl/vRZss1l2U6JLtBJ1xktmbj+du1fsbEEMJc4ZDrv/sXQwjH+4wgA3kZ1bdNeEOuVIkTRiISwkLMmRhKKjq2nxy0GlyZ+ivpOdeQHMVAtyCw6T6lwrNjI4onfuUL4zzdvLzAngla+WI9dRw61Ba6DGeCWmAyis+NDroF4TtV/Yh0EKu+IZq8s6jzKc0Mtb3pKBHTuxWhpcHGxO6zh1c+W4KoyBcWO0jL4xnt+m0vazV/yNAbVYOdwQTDu3gQiHgchvMle4WTHbXwQLGm+Ur1EYgL0dwPERzCWb38G1okGnMcPwO3aww01YXjE6J/5Qzl7PSZSP32aMtsiW7auvhmNWfoZLT3e4=
+  file:
+    - tagger/tagger-linux
+    - tagger/tagger-osx
+  on:
+    tags: true
