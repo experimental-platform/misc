@@ -1,6 +1,12 @@
 sudo: false
+services:
+  - docker
 before_script: gem install --no-ri --no-rdoc minitest-reporters
 rvm:
   - 2.2
+install:
+  - 'docker build -t tagger-builder -f tagger/tagger-builder.Dockerfile .'
+  - 'docker -it --rm -w /go/src/tagger -v $(pwd)/tagger:/go/src/tagger tagger-builder "glide install && go build -v"'
 script:
+  - 'docker -it --rm -w /go/src/tagger -v $(pwd)/tagger:/go/src/tagger tagger-builder "go test -v"'
   - test/buildimg_test.rb
