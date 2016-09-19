@@ -12,7 +12,13 @@ QUAY_ORG=${QUAY_ORG:-experimentalplatform}
 
 TAGNAME="quay.io/$QUAY_ORG/$SERVICENAME:$TRAVIS_BRANCH"
 
-docker build -t "${TAGNAME}" .
+docker build --tag "${TAGNAME}" \
+  --label build_branch="$TRAVIS_BRANCH" \
+  --label build_number="$TRAVIS_BUILD_NUMBER" \
+  --label build_commit="$TRAVIS_COMMIT" \
+  --label build_commit_range="$TRAVIS_COMMIT_RANGE" \
+  --label build_job_number="$TRAVIS_JOB_NUMBER" \
+  .
 
 if [ -e "test-image" ]; then
   if [ -x "test-image" ]; then
