@@ -28,6 +28,6 @@ if [ "${TRAVIS_BRANCH}" == "master" ]; then
 elif [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
   echo -e "\n\nWe're not uploading images from pull requests."
 else
-  docker login -e 'none' -u "$QUAY_USER" -p "$QUAY_PASS" quay.io
+  docker -u "$QUAY_USER" -p "$QUAY_PASS" quay.io
   docker push "$TAGNAME"
 fi
